@@ -153,7 +153,8 @@ def move():
     fooddir = []
     if myhealth < 80:
         closestfood = findclosestfood(me, food)
-        fooddir = dirtopoint(me, closestfood)
+        if closestfood:
+            fooddir = dirtopoint(me, closestfood)
 
     taunt = 'D.W.I.G.H.T - Determined, Worker, Intense, Good worker, Hard worker, Terrific'
     if directions and len(danger) == 2:
@@ -230,6 +231,9 @@ def dirtopoint(me, foodpoint):
 
 def findclosestfood(me, food):
     """Returns point of food piece that is closest to snake"""
+    if (len(food) == 0):
+        return False
+
     head = me[0]
     distance = findpointdistance(head, food[0])
     closestfood = food[0]
