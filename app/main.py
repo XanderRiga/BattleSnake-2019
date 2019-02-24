@@ -58,10 +58,10 @@ def move():
 
     data = bottle.request.json
 
-    snakes = data['snakes']
-    height = data['height']
-    width = data['width']
-    food = data['food']
+    snakes = data['board']['snakes']
+    height = data['board']['height']
+    width = data['board']['width']
+    food = data['board']['food']
 
     me = data['you']['body']
     mylength = data['you']['length']
@@ -73,7 +73,7 @@ def move():
     avoidheadtohead(me[0], mylength, snakes)
 
     if len(directions) == 2 or diagonaldanger(me, snakes):
-        print('doing flood fill checks')
+        # print('doing flood fill checks')
         board = buildboard(me, snakes, width, height)
         zeros = countmatrix0(board)
         # print('zeros: ' + str(zeros))
@@ -86,8 +86,8 @@ def move():
         uplist = []
         downlist = []
         leftsize = rightsize = upsize = downsize = 0
-        print('directions')
-        print(directions)
+        # print('directions')
+        # print(directions)
         for dir in directions:
             # print('headx: ' + str(headx) + ' heady: ' + str(heady))
             if dir == 'left':
@@ -107,10 +107,10 @@ def move():
                 floodfill(board, headx, heady+1, width, height, downlist)
                 downsize = len(downlist)
 
-        print(leftsize)
-        print(rightsize)
-        print(upsize)
-        print(downsize)
+        # print(leftsize)
+        # print(rightsize)
+        # print(upsize)
+        # print(downsize)
         if leftlist and leftsize < len(me) + 2 and 'left' in directions:
             if 'left' not in danger.keys() or ('left' in danger.keys() and danger['left'] < leftsize):
                 danger['left'] = leftsize
@@ -148,8 +148,8 @@ def move():
                 danger['down'] = downsize
 
 
-    print(danger)
-    print(instadeath)
+    # print(danger)
+    # print(instadeath)
     fooddir = []
     if myhealth < 80:
         closestfood = findclosestfood(me, food)
@@ -197,7 +197,7 @@ def end():
     TODO: If your snake AI was stateful,
         clean up any stateful objects here.
     """
-    print(json.dumps(data))
+    # print(json.dumps(data))
 
     return end_response()
 
@@ -464,12 +464,12 @@ def diagonaldanger(me, snakes):
     for snake in snakes:
         for bodypart in snake['body']:
             if isdiagonal(head, bodypart):
-                print('There is danger diagonally')
+                # print('There is danger diagonally')
                 return True
 
     for point in me[:-1]:
         if isdiagonal(head, point):
-            print('There is danger diagonally')
+            # print('There is danger diagonally')
             return True
 
     return False
