@@ -64,7 +64,7 @@ def move():
     food = data['board']['food']
 
     me = data['you']['body']
-    mylength = data['you']['length']
+    mylength = len(data['you']['body'])
     myhealth = data['you']['health']
 
     donthitsnakes(me[0], snakes)
@@ -390,7 +390,7 @@ def avoidheadtohead(head, mylength, snakes):
 
     othersnakeadj = []
     for snake in snakes:
-        if snake['body'][0] != head and snake['length'] >= mylength:
+        if snake['body'][0] != head and len(snake['body']) >= mylength:
             snakeadjpts = getadjpoints(snake['body'][0])
             for z in snakeadjpts:
                 othersnakeadj.append(z)
