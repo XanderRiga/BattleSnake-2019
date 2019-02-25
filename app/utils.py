@@ -1,3 +1,6 @@
+import copy
+
+
 def getadjpoints(point):
     """returns point objects of all of the adjacent points of a given point"""
     superduperpoint = copy.deepcopy(point)
