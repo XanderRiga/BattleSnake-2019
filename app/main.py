@@ -39,10 +39,22 @@ def ping():
 
 @bottle.post('/start')
 def start():
-    data = bottle.request.json
-    color = "#ffcc00"
 
-    return start_response(color)
+    head_url = '%s://%s/static/dwight.png' % (
+        bottle.request.urlparts.scheme,
+        bottle.request.urlparts.netloc
+    )
+
+    start = {
+        'taunt': 'D.W.I.G.H.T - Determined, Worker, Intense, Good worker, Hard worker, Terrific',
+        'name': 'Dwight Snake',
+        'color': '#ffcc00',
+        'head_type': 'safe',
+        'tail_type': 'round-bum',
+        'head_url': head_url
+    }
+
+    return start_response(start)
 
 
 @bottle.post('/move')
