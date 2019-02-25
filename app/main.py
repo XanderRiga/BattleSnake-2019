@@ -5,6 +5,7 @@ import bottle
 import copy
 import math
 import utils
+import collections
 
 from api import ping_response, start_response, move_response, end_response
 
@@ -153,15 +154,7 @@ def move():
                 danger['down'] = downsize
 
 
-    # print(danger)
-    # print(instadeath)
-    fooddir = []
-    if myhealth < 80:
-        closestfood = findclosestfood(me, food)
-        if closestfood:
-            fooddir = dirtopoint(me, closestfood)
-
-    taunt = 'D.W.I.G.H.T - Determined, Worker, Intense, Good worker, Hard worker, Terrific'
+    direction = None
     if directions and len(danger) == 2:
         currsafest = 0
         currdirection = None
@@ -173,40 +166,106 @@ def move():
         if currdirection:
             direction = currdirection
     elif directions:
-        direction = random.choice(directions)
-        if fooddir:
-            for x in fooddir:
-                if x in directions:
-                    direction = x
-                    break
+        board = buildboard(me, snakes, width, height)
+        quadrant_dict = safest_leftover_point(board)
+        sorted_quadrants = sorted(quadrant_dict.items(), reverse=True)
+        for key, value in sorted_quadrants:
+            if key in directions:
+                direction = dirtopoint(me, value)
+                break
+
+        if myhealth < 50:
+            closestfood = findclosestfood(me, food)
+            if closestfood:
+                fooddir = dirtopoint(me, closestfood)
+                if fooddir:
+                    if fooddir in directions:
+                        direction = fooddir
     else:
         taunt = 'MICHAEL!!!!!!'
         direction = 'up'
         safest = 0
-        # print('We are in danger, here is the direction dict:')
-        # print(directions)
-        # print('We are in danger, here is the danger dict:')
-        # print(danger)
         for key, value in danger.items():
             if value > safest and key not in instadeath:
                 safest = value
                 direction = key
 
+    if not direction:
+        direction = random.choice(directions)
     return move_response(direction)
 
 
 @bottle.post('/end')
 def end():
-    data = bottle.request.json
-
-    """
-    TODO: If your snake AI was stateful,
-        clean up any stateful objects here.
-    """
-    # print(json.dumps(data))
-
     return end_response()
 
+
+def safest_leftover_point(board):
+    """returns dict of key: safety value, value: point to center of that quadrant"""
+    tl = get_top_left_safety(board)
+    tr = get_top_right_safety(board)
+    bl = get_bottom_left_safety(board)
+    br = get_bottom_right_safety(board)
+
+    tl_point = {'x': math.ceil(len(board) / 4), 'y': math.ceil(len(board[0]) / 4)}
+    tr_point = {'x': math.ceil(len(board) - len(board) / 4), 'y': math.ceil(len(board[0]) / 4)}
+    bl_point = {'x': math.ceil(len(board) / 4), 'y': math.ceil(len(board[0]) - len(board[0]) / 4)}
+    br_point = {'x': math.ceil(len(board) - len(board) / 4), 'y': math.ceil(len(board[0]) - len(board[0]) / 4)}
+
+    return {
+        tl: tl_point,
+        tr: tr_point,
+        bl: bl_point,
+        br: br_point
+    }
+
+
+def get_top_left_safety(board):
+    quadrant_width = len(board) / 2
+    quadrant_height = len(board[0]) / 2
+
+    num_safe = 0
+    for x in range(0, quadrant_width + 1):
+        for y in range(0, quadrant_height + 1):
+            if board[x][y] == 0:
+                num_safe += 1
+    return num_safe
+
+
+def get_bottom_right_safety(board):
+    quadrant_width = len(board) / 2
+    quadrant_height = len(board[0]) / 2
+
+    num_safe = 0
+    for x in range(quadrant_width + 1, len(board)):
+        for y in range(quadrant_height + 1, len(board[0])):
+            if board[x][y] == 0:
+                num_safe += 1
+    return num_safe
+
+
+def get_bottom_left_safety(board):
+    quadrant_width = len(board) / 2
+    quadrant_height = len(board[0]) / 2
+
+    num_safe = 0
+    for x in range(0, quadrant_width + 1):
+        for y in range(quadrant_height + 1, len(board[0])):
+            if board[x][y] == 0:
+                num_safe += 1
+    return num_safe
+
+
+def get_top_right_safety(board):
+    quadrant_width = len(board) / 2
+    quadrant_height = len(board[0]) / 2
+
+    num_safe = 0
+    for x in range(quadrant_width + 1, len(board)):
+        for y in range(0, quadrant_height + 1):
+            if board[x][y] == 0:
+                num_safe += 1
+    return num_safe
 
 #
 # KENDRAS CODE
