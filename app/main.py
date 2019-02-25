@@ -4,6 +4,7 @@ import random
 import bottle
 import copy
 import math
+import utils
 
 from api import ping_response, start_response, move_response, end_response
 
@@ -72,7 +73,7 @@ def move():
     donthittail(me)
     avoidheadtohead(me[0], mylength, snakes)
 
-    if len(directions) == 2 or diagonaldanger(me, snakes):
+    if len(directions) == 2 or utils.diagonaldanger(me, snakes):
         # print('doing flood fill checks')
         board = buildboard(me, snakes, width, height)
         zeros = countmatrix0(board)
@@ -325,7 +326,7 @@ def buildboard(me, snakes, width, height):
 #     if istouchingsnake(point, me, snakes):
 #         print('touching snake')
 #         return True
-#     if istouchingself(point, me):
+#     if utils.istouchingself(point, me):
 #         print('touching self')
 #         return True
 
@@ -336,7 +337,7 @@ def donthitsnakes(head, snakes):
 
     for snake in snakes:
         for bodypart in snake['body']:
-            adj = findadjacentdir(head, bodypart)
+            adj = utils.findadjacentdir(head, bodypart)
             if adj and adj in directions:
                 directions.remove(adj)
             if adj and adj not in instadeath:
@@ -351,7 +352,7 @@ def donthittail(me):
     head = me[0]
 
     for x in me[:-1]:  # it is ok to move where the last point in our tail is
-        adj = findadjacentdir(head, x)
+        adj = utils.findadjacentdir(head, x)
         if adj and adj in directions:
             directions.remove(adj)
         if adj and adj not in instadeath:
@@ -390,215 +391,25 @@ def donthitwalls(me, width, height):
 def avoidheadtohead(head, mylength, snakes):
     global directions
     global danger
-    myadj = getadjpoints(head)
+    myadj = utils.getadjpoints(head)
 
     othersnakeadj = []
     for snake in snakes:
         if snake['body'][0] != head and len(snake['body']) >= mylength:
-            snakeadjpts = getadjpoints(snake['body'][0])
+            snakeadjpts = utils.getadjpoints(snake['body'][0])
             for z in snakeadjpts:
                 othersnakeadj.append(z)
 
     for x in myadj:
         for y in othersnakeadj:
             if x == y:
-                dir = findadjacentdir(head, x)
+                dir = utils.findadjacentdir(head, x)
                 if dir not in danger:
                     # print('adding ' + str(dir) + 'to danger array with value ' + str(mylength+1))
                     danger[dir] = mylength+1
                 if dir and dir in directions:
                     # print('head to head, removing ' + dir)
                     directions.remove(dir)
-
-
-#
-#
-# Below here are utility functions
-#
-#
-
-
-def getadjpoints(point):
-    """returns point objects of all of the adjacent points of a given point"""
-    superduperpoint = copy.deepcopy(point)
-    # print('Point: ')
-    # print(superduperpoint)
-
-    left = copy.deepcopy(superduperpoint)
-    left['x'] = left['x']-1
-    # print('left:')
-    # print(left)
-
-    right = copy.deepcopy(superduperpoint)
-    right['x'] = right['x']+1
-    # print('right:')
-    # print(right)
-
-    up = copy.deepcopy(superduperpoint)
-    up['y'] = up['y']-1
-    # print('up')
-    # print(up)
-
-    down = copy.deepcopy(superduperpoint)
-    down['y'] = down['y']+1
-    # print('down')
-    # print(down)
-
-    points = [left, right, up, down]
-    # print(points)
-    return points
-
-
-def isdiagonal(a, b):
-    ax = a["x"]
-    ay = a["y"]
-    bx = b["x"]
-    by = b["y"]
-
-    if abs(ax - bx) == 1 and abs(ay - by) == 1:
-        return True
-    else:
-        return False
-
-
-def diagonaldanger(me, snakes):
-    """returns true if there is a dangerous point diagonal of the point"""
-    head = me[0]
-
-    for snake in snakes:
-        for bodypart in snake['body']:
-            if isdiagonal(head, bodypart):
-                # print('There is danger diagonally')
-                return True
-
-    for point in me[:-1]:
-        if isdiagonal(head, point):
-            # print('There is danger diagonally')
-            return True
-
-    return False
-
-
-def dirtouchingsnake(point, me, snakes):
-    """checks if the point is touching a snake, not including this snakes head or neck"""
-    head = me[0]
-    neck = me[1]
-
-    dirs = []
-
-    for snake in snakes:
-        for bodypart in snake['body']:
-            if bodypart not in me:
-                adj = findadjacentdir(point, bodypart)
-                if adj:
-                    dirs.append(adj)
-
-    return dirs
-
-
-def istouchingself(point, me):
-    """checks if a point is touching this snake, not including head or neck"""
-    self = me[2:]
-
-    for x in self:
-        if isadjacentdiagonal(point, x):
-            return x
-
-    return False
-
-
-def dirtouchingself(point, me):
-    """checks if a point is touching this snake, not including head or neck"""
-    dirs = []
-
-    for x in me:
-        dir = findadjacentdir(point, x)
-        if dir:
-            dirs.append(dir)
-
-    return dirs
-
-
-def dirtouchingwall(point, width, height):
-    """returns direction of wall if any"""
-    walls = []
-    if point['x'] == 0:
-        walls.append('left')
-    if point['x'] == width - 1:
-        walls.append('right')
-    if point['y'] == 0:
-        walls.append('up')
-    if point['y'] == height - 1:
-        walls.append('down')
-
-    return walls
-
-
-def findadjacentdir(a, b):
-    """Gives direction from a to b if they are adjacent(not diagonal), if they are not adjacent returns false"""
-    ax = a['x']
-    ay = a['y']
-    bx = b['x']
-    by = b['y']
-    xdiff = ax - bx
-    ydiff = ay - by
-
-    if (xdiff in range(-1, 2) and ydiff == 0) or (ydiff in range(-1, 2) and xdiff == 0):
-        if xdiff != 0:
-            if xdiff > 0:
-                return 'left'
-            else:
-                return 'right'
-        if ydiff != 0:
-            if ydiff > 0:
-                return 'up'
-            else:
-                return 'down'
-    else:
-        return False
-
-
-def isadjacentdiagonal(a, b):
-    """Returns true if a is adjacent to be(with diagonal), if they are not adjacent returns false"""
-    ax = a['x']
-    ay = a['y']
-    bx = b['x']
-    by = b['y']
-    xdiff = ax - bx
-    ydiff = ay - by
-
-    if xdiff in range(-1, 2) and ydiff in range(-1, 2):
-        return True
-    else:
-        return False
-
-
-def getleft(point):
-    newpoint = point
-    newpoint['x'] = point['x']-1
-    return newpoint
-
-
-def getright(point):
-    newpoint = point
-    newpoint['x'] = point['x']+1
-    return newpoint
-
-
-def getup(point):
-    newpoint = point
-    newpoint['y'] = point['y']-1
-    return newpoint
-
-
-def getdown(point):
-    newpoint = point
-    newpoint['y'] = point['y']+1
-    return newpoint
-
-
-
-
 
 
 # Expose WSGI app (so gunicorn can find it)
