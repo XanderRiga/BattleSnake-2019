@@ -71,16 +71,40 @@ def move():
     me = data['you']['body']
     mylength = len(data['you']['body'])
     myhealth = data['you']['health']
+    my_id = data['you']['id']
 
     donthitsnakes(me[0], snakes)
     donthitwalls(me, width, height)
     donthittail(me)
     avoidheadtohead(me[0], mylength, snakes)
+    future_block_ins = determine_future_block_ins(me, snakes, width, height, my_id)
+
+    # ======== Do danger array stuff with flood fill
+
+    if 'leftsize' in future_block_ins.keys() and future_block_ins['leftsize'] < len(me) + 2 and 'left' in directions:
+        if 'left' not in danger.keys() or ('left' in danger.keys() and danger['left'] < future_block_ins['leftsize']):
+            if future_block_ins['leftsize'] != 0:
+                danger['left'] = future_block_ins['leftsize']
+
+    if 'rightsize' in future_block_ins.keys() and future_block_ins['rightsize'] < len(me) + 2 and 'right' in directions:
+        if 'right' not in danger.keys() or ('right' in danger.keys() and danger['right'] < future_block_ins['rightsize']):
+            if future_block_ins['rightsize'] != 0:
+                danger['right'] = future_block_ins['rightsize']
+
+    if 'upsize' in future_block_ins.keys() and future_block_ins['upsize'] < len(me) + 2 and 'up' in directions:
+        if 'up' not in danger.keys() or ('up' in danger.keys() and danger['up'] < future_block_ins['upsize']):
+            if future_block_ins['upsize'] != 0:
+                danger['up'] = future_block_ins['upsize']
+
+    if 'downsize' in future_block_ins.keys() and future_block_ins['downsize'] < len(me) + 2 and 'down' in directions:
+        if 'down' not in danger.keys() or ('down' in danger.keys() and danger['down'] < future_block_ins['downsize']):
+            if future_block_ins['downsize'] != 0:
+                danger['down'] = future_block_ins['downsize']
 
     if len(directions) == 2 or utils.diagonaldanger(me, snakes):
         # print('doing flood fill checks')
         board = buildboard(me, snakes, width, height)
-        zeros = countmatrix0(board)
+        # zeros = countmatrix0(board)
         # print('zeros: ' + str(zeros))
 
         headx = me[0]["x"]
@@ -112,10 +136,10 @@ def move():
                 floodfill(board, headx, heady+1, width, height, downlist)
                 downsize = len(downlist)
 
-        # print(leftsize)
-        # print(rightsize)
-        # print(upsize)
-        # print(downsize)
+
+
+# ======== Do danger array stuff with flood fill
+
         if leftlist and leftsize < len(me) + 2 and 'left' in directions:
             if 'left' not in danger.keys() or ('left' in danger.keys() and danger['left'] < leftsize):
                 danger['left'] = leftsize
@@ -180,7 +204,6 @@ def move():
                     direction = x
                     break
     else:
-        taunt = 'MICHAEL!!!!!!'
         direction = 'up'
         safest = 0
         # print('We are in danger, here is the direction dict:')
@@ -191,6 +214,10 @@ def move():
             if value > safest and key not in instadeath:
                 safest = value
                 direction = key
+
+    # print('directions array: ' + str(directions))
+    # print('danger array: ' + str(danger))
+    # print('instadeath: ' + str(instadeath))
 
     return move_response(direction)
 
@@ -208,27 +235,151 @@ def end():
     return end_response()
 
 
+def determine_future_block_ins(me, snakes, width, height, my_id):
+    board = buildboard(me, snakes, width, height)
+    snake_heads = utils.get_snake_heads(snakes, my_id)
+    dangerous_snake_heads = []
+    for snake_head in snake_heads:
+        if not utils.isadjacentdiagonal(me[0], snake_head):
+            dangerous_snake_heads.append(snake_head)
+
+    return get_nearby_snake_heads(board, snake_heads, me[0])
+
+
+def get_nearby_snake_heads(board, snake_heads, my_head):
+    # potential_choke_heads = []
+    # for snake_head in snake_heads:
+    #     if utils.distance_to(snake_head, my_head) <= 4:
+    #         potential_choke_heads.append(snake_head)
+
+    fill_in_snake_possible_directions(board, snake_heads)
+
+    leftlist, rightlist, downlist, uplist = [], [], [], []
+    leftsize, rightsize, downsize, upsize = 0, 0, 0, 0
+
+    for dir in directions:
+        headx = my_head["x"]
+        heady = my_head["y"]
+
+        if dir == 'left':
+            floodfill(board, headx - 1, heady, len(board), len(board[0]), leftlist)
+            leftsize = len(leftlist)
+        if dir == 'right':
+            floodfill(board, headx + 1, heady, len(board), len(board[0]), rightlist)
+            rightsize = len(rightlist)
+        if dir == 'down':
+            floodfill(board, headx, heady + 1, len(board), len(board[0]), downlist)
+            downsize = len(downlist)
+        if dir == 'up':
+            floodfill(board, headx, heady - 1, len(board), len(board[0]), uplist)
+            upsize = len(uplist)
+
+    return {
+        'leftsize': leftsize,
+        'rightsize': rightsize,
+        'downsize': downsize,
+        'upsize': upsize
+    }
+
+
+def fill_in_snake_possible_directions(board, heads):
+    for head in heads:
+        fill_in_surrounding_points(board, head)
+
+
+def fill_in_surrounding_points(board, head):
+    for dir in direction_snake_can_go(board, head):
+        if dir == 'left':
+            newpoint = head
+            newpoint['y'] -= 1
+            board[newpoint['x']][newpoint['y']] = 1
+        if dir == 'right':
+            newpoint = head
+            newpoint['y'] += 1
+            board[newpoint['x']][newpoint['y']] = 1
+        if dir == 'down':
+            newpoint = head
+            newpoint['x'] += 1
+            board[newpoint['x']][newpoint['y']] = 1
+        if dir == 'up':
+            newpoint = head
+            newpoint['x'] -= 1
+            board[newpoint['x']][newpoint['y']] = 1
+
+
+def direction_snake_can_go(board, head):
+    dirlist = []
+    if head['y'] < len(board[0])-1 and board[head['x']][head['y'] + 1] == 0:
+        dirlist.append('right')
+    if head['y'] > 0 and board[head['x']][head['y'] - 1] == 0:
+        dirlist.append('left')
+    if head['x'] < len(board)-1 and board[head['x'] + 1][head['y']] == 0:
+        dirlist.append('down')
+    if head['x'] > 0 and board[head['x'] - 1][head['y']] == 0:
+        dirlist.append('up')
+
+    return dirlist
+
+def get_choke_points(board, point):
+    choke_points = []
+    for x in board:
+        for y in board[x]:
+            point = {'x': x, 'y': y}
+            if num_adjacent_zeros(board, point) <= 2:
+                choke_points.append(point)
+
+    return choke_points
+
+
+def num_adjacent_zeros(board, point):
+    num_zeros = 0
+
+    if is_zero(board, utils.getleft(point)):
+        num_zeros += 1
+    elif is_zero(board, utils.getright(point)):
+        num_zeros += 1
+    elif is_zero(board, utils.getup(point)):
+        num_zeros += 1
+    elif is_zero(board, utils.getdown(point)):
+        num_zeros += 1
+
+    return num_zeros
+
+
+def is_zero(board, point):
+    """Returns false if the point is not on the board or a 1, true if a zero"""
+    x = point['x']
+    y = point['y']
+
+    if x < 0 or y < 0:
+        return False
+    if x > len(board) or y > len(board[0]):
+        return False
+
+    return board[x][y] == 0
+
 #
 # KENDRAS CODE
 
-def dirtopoint(me, foodpoint):
-    """Returns array of directions to foodpoint"""
+
+def dirtopoint(me, point):
+    """Returns array of directions to point"""
     global directions
     head = me[0]
-    xdiff = abs(head['x'] - foodpoint['x'])
-    ydiff = abs(head['y'] - foodpoint['y'])
+    xdiff = abs(head['x'] - point['x'])
+    ydiff = abs(head['y'] - point['y'])
 
     newlist = []
-    if xdiff >= ydiff and head['x'] - foodpoint['x'] >= 0:
+    if xdiff >= ydiff and head['x'] - point['x'] >= 0:
         newlist.append('left')
 
-    if xdiff >= ydiff and head['x'] - foodpoint['x'] < 0:
+    if xdiff >= ydiff and head['x'] - point['x'] < 0:
         newlist.append('right')
 
-    if xdiff < ydiff and head['y'] - foodpoint['y'] >= 0:
+    if xdiff < ydiff and head['y'] - point['y'] >= 0:
         newlist.append('up')
 
-    if xdiff < ydiff and head['y'] - foodpoint['y'] < 0:
+    if xdiff < ydiff and head['y'] - point['y'] < 0:
         newlist.append('down')
 
     return newlist

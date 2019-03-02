@@ -1,5 +1,10 @@
 import copy
+import math
 
+
+def distance_to(a, b):
+    """"Distance from point a to b"""
+    return math.hypot(abs(a['x'] - b['x']), abs(a['y'] - b['y']))
 
 def getadjpoints(point):
     """returns point objects of all of the adjacent points of a given point"""
@@ -42,6 +47,15 @@ def isdiagonal(a, b):
         return True
     else:
         return False
+
+
+def get_snake_heads(snakes, my_id):
+    heads = []
+    for snake in snakes:
+        if snake['id'] != my_id:
+            heads.append(snake['body'][0])
+
+    return heads
 
 
 def diagonaldanger(me, snakes):
@@ -178,5 +192,3 @@ def getdown(point):
     newpoint = point
     newpoint['y'] = point['y']+1
     return newpoint
-
-
