@@ -340,7 +340,7 @@ def donthitsnakes(head, snakes):
     global instadeath
 
     for snake in snakes:
-        for bodypart in snake['body']:
+        for bodypart in snake['body'][:-1]:
             adj = utils.findadjacentdir(head, bodypart)
             if adj and adj in directions:
                 directions.remove(adj)
