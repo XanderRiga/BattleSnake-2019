@@ -83,35 +83,23 @@ def move():
 
     if 'leftsize' in future_block_ins.keys() and future_block_ins['leftsize'] < len(me) + 2 and 'left' in directions:
         if 'left' not in danger.keys() or ('left' in danger.keys() and danger['left'] < future_block_ins['leftsize']):
-            danger['left'] = future_block_ins['leftsize']
-        directions.remove('left')
-    if 'leftsize' in future_block_ins.keys():
-        if 'left' not in danger.keys() or ('left' in danger.keys() and danger['left'] < future_block_ins['leftsize']):
-            danger['left'] = future_block_ins['leftsize']
+            if future_block_ins['leftsize'] != 0:
+                danger['left'] = future_block_ins['leftsize']
 
     if 'rightsize' in future_block_ins.keys() and future_block_ins['rightsize'] < len(me) + 2 and 'right' in directions:
         if 'right' not in danger.keys() or ('right' in danger.keys() and danger['right'] < future_block_ins['rightsize']):
-            danger['right'] = future_block_ins['rightsize']
-        directions.remove('right')
-    if 'rightsize' in future_block_ins.keys():
-        if 'right' not in danger.keys() or ('right' in danger.keys() and danger['right'] < future_block_ins['rightsize']):
-            danger['right'] = future_block_ins['rightsize']
+            if future_block_ins['rightsize'] != 0:
+                danger['right'] = future_block_ins['rightsize']
 
     if 'upsize' in future_block_ins.keys() and future_block_ins['upsize'] < len(me) + 2 and 'up' in directions:
         if 'up' not in danger.keys() or ('up' in danger.keys() and danger['up'] < future_block_ins['upsize']):
-            danger['up'] = future_block_ins['upsize']
-        directions.remove('up')
-    if 'upsize' in future_block_ins.keys():
-        if 'up' not in danger.keys() or ('up' in danger.keys() and danger['up'] < future_block_ins['upsize']):
-            danger['up'] = future_block_ins['upsize']
+            if future_block_ins['upsize'] != 0:
+                danger['up'] = future_block_ins['upsize']
 
     if 'downsize' in future_block_ins.keys() and future_block_ins['downsize'] < len(me) + 2 and 'down' in directions:
         if 'down' not in danger.keys() or ('down' in danger.keys() and danger['down'] < future_block_ins['downsize']):
-            danger['down'] = future_block_ins['downsize']
-        directions.remove('down')
-    if 'downsize' in future_block_ins.keys():
-        if 'down' not in danger.keys() or ('down' in danger.keys() and danger['down'] < future_block_ins['downsize']):
-            danger['down'] = future_block_ins['downsize']
+            if future_block_ins['downsize'] != 0:
+                danger['down'] = future_block_ins['downsize']
 
     if len(directions) == 2 or utils.diagonaldanger(me, snakes):
         # print('doing flood fill checks')
@@ -287,10 +275,10 @@ def get_nearby_snake_heads(board, snake_heads, my_head):
             upsize = len(uplist)
 
     return {
-        leftsize: leftsize,
-        rightsize: rightsize,
-        downsize: downsize,
-        upsize: upsize
+        'leftsize': leftsize,
+        'rightsize': rightsize,
+        'downsize': downsize,
+        'upsize': upsize
     }
 
 
@@ -358,7 +346,6 @@ def num_adjacent_zeros(board, point):
     return num_zeros
 
 
-
 def is_zero(board, point):
     """Returns false if the point is not on the board or a 1, true if a zero"""
     x = point['x']
@@ -373,6 +360,7 @@ def is_zero(board, point):
 
 #
 # KENDRAS CODE
+
 
 def dirtopoint(me, point):
     """Returns array of directions to point"""
