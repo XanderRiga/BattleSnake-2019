@@ -73,10 +73,10 @@ def move():
     myhealth = data['you']['health']
     my_id = data['you']['id']
 
+    avoidheadtohead(me[0], mylength, snakes, my_id)
     donthitsnakes(me[0], snakes)
     donthitwalls(me, width, height)
     donthittail(me)
-    avoidheadtohead(me[0], mylength, snakes)
     future_block_ins = determine_future_block_ins(me, snakes, width, height, my_id)
 
     # ======== Do danger array stuff with flood fill
@@ -543,24 +543,29 @@ def donthitwalls(me, width, height):
             instadeath.append('down')
 
 
-def avoidheadtohead(head, mylength, snakes):
+def avoidheadtohead(head, mylength, snakes, myid):
     global directions
     global danger
     myadj = utils.getadjpoints(head)
+    # print('myhead: ' + str(head))
 
     othersnakeadj = []
     for snake in snakes:
-        if snake['body'][0] != head and len(snake['body']) >= mylength:
+        if snake['id'] != myid and len(snake['body']) >= mylength:
             snakeadjpts = utils.getadjpoints(snake['body'][0])
+            # print('snakehead: ' + str(snake['body'][0]))
             for z in snakeadjpts:
                 othersnakeadj.append(z)
 
     for x in myadj:
         for y in othersnakeadj:
-            if x == y:
+            # print('comparing x: ' + str(x) + ' y: ' + str(y))
+            if x['x'] == y['x'] and x['y'] == y['y']:
                 dir = utils.findadjacentdir(head, x)
+                # print('avoiding head to head')
                 if dir not in danger:
                     # print('adding ' + str(dir) + 'to danger array with value ' + str(mylength+1))
+                    # print('updating danger array')
                     danger[dir] = mylength+1
                 if dir and dir in directions:
                     # print('head to head, removing ' + dir)

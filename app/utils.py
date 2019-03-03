@@ -9,8 +9,6 @@ def distance_to(a, b):
 def getadjpoints(point):
     """returns point objects of all of the adjacent points of a given point"""
     superduperpoint = copy.deepcopy(point)
-    # print('Point: ')
-    # print(superduperpoint)
 
     left = copy.deepcopy(superduperpoint)
     left['x'] = left['x']-1
